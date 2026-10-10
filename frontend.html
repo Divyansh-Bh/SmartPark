@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartPark</title>
+  <style>
+:root {
+  color-scheme: light;
+  --ink: #17251f;
+  --muted: #697871;
+  --green: #176b4d;
+  --green-dark: #10553d;
+  --mint: #e7f4ed;
+  --line: #dfe8e2;
+  --paper: #fff;
+  --bg: #f4f7f5;
+  --red: #a83c36;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: var(--bg); }
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  padding: 42px max(24px, calc((100vw - 1080px) / 2)); color: #fff;
+  background: linear-gradient(120deg, #123d30, #197552);
+}
+.topbar h1 { margin: 4px 0 8px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.04em; }
+.subtitle { margin: 0; color: #d8eee3; }
+.eyebrow { margin: 0 0 7px; color: var(--green); font-size: .72rem; font-weight: 800; letter-spacing: .13em; }
+.topbar .eyebrow { color: #a8dfc2; }
+.badge { flex: none; padding: 9px 13px; border: 1px solid #ffffff55; border-radius: 999px; font-size: .82rem; }
+main { width: min(1080px, calc(100% - 32px)); margin: 28px auto; display: grid; gap: 18px; }
+.panel { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 5px 20px #183b2810; }
+.panel h2 { margin: 0 0 18px; font-size: 1.35rem; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.form-row { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
+label { display: grid; gap: 7px; min-width: min(220px, 100%); flex: 1; font-size: .88rem; font-weight: 650; }
+input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #cbd8cf; border-radius: 9px; color: var(--ink); background: #fff; font: inherit; }
+input:focus { outline: 3px solid #176b4d25; border-color: var(--green); }
+button { min-height: 44px; padding: 0 17px; border: 0; border-radius: 9px; color: #fff; background: var(--green); font: inherit; font-weight: 750; cursor: pointer; }
+button:hover { background: var(--green-dark); }
+button:disabled { opacity: .55; cursor: wait; }
+.button-secondary { color: var(--green-dark); background: var(--mint); }
+.button-secondary:hover { background: #d4ebdd; }
+.summary { margin: 0 0 14px; color: var(--muted); font-size: .9rem; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; }
+.slot { padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: #f8faf8; }
+.slot strong, .slot span { display: block; }
+.slot span { margin-top: 5px; color: var(--muted); font-size: .82rem; }
+.slot.available { border-color: #b7ddc7; background: #f0faf4; }
+.slot.occupied { border-color: #f0d1ce; background: #fff6f5; }
+.slot.out-of-service { color: var(--muted); background: #f1f2f1; }
+.message { min-height: 1.25em; margin: 12px 0 0; color: var(--green-dark); font-size: .9rem; }
+.message.error { color: var(--red); }
+.hint, footer { color: var(--muted); font-size: .84rem; }
+.hint { margin-bottom: 0; }
+.active-booking { margin-top: 12px; padding: 15px; border-radius: 10px; background: var(--mint); }
+.active-booking button { margin: 10px 8px 0 0; }
+.table-wrap { overflow-x: auto; margin-top: 12px; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
+th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; }
+.empty { color: var(--muted); text-align: center; }
+footer { padding: 10px 16px 28px; text-align: center; }
+@media (max-width: 620px) {
+  .topbar { align-items: flex-start; flex-direction: column; padding: 30px 20px; }
+  .panel { padding: 19px; }
+  .form-row { align-items: stretch; flex-direction: column; }
+  .form-row label { min-width: 100%; }
+  .form-row button { width: 100%; }
+}
+
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">SMARTPARK</p>
+      <h1>Parking, made simple.</h1>
+      <p class="subtitle">Register your vehicle, find a space, and manage your visit.</p>
+    </div>
+    <span id="connectionBadge" class="badge">Connecting…</span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">YOUR VEHICLE</p><h2>Register vehicle</h2></div>
+      </div>
+      <form id="vehicleForm" class="form-row">
+        <label>Owner name
+          <input name="owner_name" required maxlength="100" placeholder="e.g. Asha Sharma">
+        </label>
+        <label>Number plate
+          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="e.g. DL8CAF1234" autocomplete="off" autocapitalize="characters">
+        </label>
+        <button type="submit">Register</button>
+      </form>
+      <p id="vehicleMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">LIVE PARKING</p><h2>Parking slots</h2></div>
+        <button id="refreshSlots" class="button-secondary" type="button">Refresh</button>
+      </div>
+      <div id="slotSummary" class="summary"></div>
+      <div id="slotGrid" class="slot-grid" aria-live="polite"></div>
+      <p class="hint">Register your vehicle before requesting a slot.</p>
+    </section>
+
+    <section class="panel">
+      <div><p class="eyebrow">PARKING REQUEST</p><h2>Book a slot</h2></div>
+      <form id="bookingForm" class="form-row">
+        <label>Registered number plate
+          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="Enter your plate" autocomplete="off" autocapitalize="characters">
+        </label>
+        <button type="submit">Book a slot</button>
+      </form>
+      <p id="bookingMessage" class="message" role="status"></p>
+      <div id="activeBooking" class="active-booking" hidden></div>
+    </section>
+
+    <section class="panel">
+      <div><p class="eyebrow">YOUR VISITS</p><h2>Booking history</h2></div>
+      <form id="historyForm" class="form-row">
+        <label>Number plate
+          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="Enter your plate" autocomplete="off" autocapitalize="characters">
+        </label>
+        <button type="submit" class="button-secondary">View history</button>
+      </form>
+      <p id="historyMessage" class="message" role="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Booking</th><th>Slot</th><th>Status</th><th>Booked</th><th>Entry</th><th>Exit</th></tr></thead>
+          <tbody id="historyRows"><tr><td colspan="6" class="empty">Enter a plate to view its history.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer>SmartPark · OS + DBMS Project</footer>
+  <script>
+// Set this URL to the Flask server address used by the team.
+const API_BASE = "http://127.0.0.1:5000/api";
+const byId = (id) => document.getElementById(id);
+
+async function api(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+  return body;
+}
+
+function showMessage(id, text, isError = false) {
+  const element = byId(id);
+  element.textContent = text;
+  element.classList.toggle("error", isError);
+}
+
+function cleanPlate(value) {
+  const plate = value.trim().replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}[0-9]{1,2}[A-Z]{1,8}[0-9]{4}$/.test(plate)) {
+    throw new Error("Use 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits (example: DL8CAF1234).");
+  }
+  return plate;
+}
+
+document.querySelectorAll('input[name="plate"]').forEach((input) => {
+  input.addEventListener("input", () => {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    input.value = input.value.toUpperCase();
+    input.setSelectionRange(start, end);
+  });
+});
+
+async function loadHealth() {
+  const badge = byId("connectionBadge");
+  try {
+    await api("/health");
+    badge.textContent = "Backend connected";
+  } catch {
+    badge.textContent = "Backend unavailable";
+  }
+}
+
+async function loadSlots() {
+  const grid = byId("slotGrid");
+  const summary = byId("slotSummary");
+  grid.textContent = "Loading slots…";
+  try {
+    const slots = await api("/slots");
+    const available = slots.filter((slot) => slot.status === "AVAILABLE").length;
+    summary.textContent = `${available} of ${slots.length} slots available`;
+    grid.replaceChildren();
+    for (const slot of slots) {
+      const card = document.createElement("div");
+      card.className = `slot ${slot.status.toLowerCase().replaceAll("_", "-")}`;
+      const name = document.createElement("strong");
+      name.textContent = slot.label;
+      const detail = document.createElement("span");
+      detail.textContent = `${slot.slot_type} · ${slot.status.replaceAll("_", " ")}`;
+      card.append(name, detail);
+      grid.append(card);
+    }
+    if (!slots.length) grid.textContent = "No parking slots have been added yet.";
+  } catch (error) {
+    grid.textContent = "Could not load slots. Check that the Flask server is running.";
+    summary.textContent = error.message;
+  }
+}
+
+byId("vehicleForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const button = event.currentTarget.querySelector("button");
+  button.disabled = true;
+  try {
+    const result = await api("/vehicles", {
+      method: "POST",
+      body: JSON.stringify({ owner_name: form.get("owner_name").trim(), plate: cleanPlate(form.get("plate")) })
+    });
+    showMessage("vehicleMessage", `Vehicle ${result.plate} registered.`);
+    event.currentTarget.reset();
+  } catch (error) {
+    showMessage("vehicleMessage", error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+byId("bookingForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const button = event.currentTarget.querySelector("button");
+  button.disabled = true;
+  try {
+    const result = await api("/bookings", {
+      method: "POST", body: JSON.stringify({ plate: cleanPlate(form.get("plate")) })
+    });
+    showMessage("bookingMessage", `Booking confirmed. Your slot is ${result.slot_id}.`);
+    renderActiveBooking(result);
+    await loadSlots();
+  } catch (error) {
+    showMessage("bookingMessage", error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function renderActiveBooking(booking) {
+  const box = byId("activeBooking");
+  box.hidden = false;
+  box.replaceChildren();
+  const title = document.createElement("strong");
+  title.textContent = `Booking #${booking.booking_id} · Slot ${booking.slot_id} · ${booking.status}`;
+  box.append(title);
+  for (const [action, label] of [["entry", "Record vehicle entry"], ["exit", "Record vehicle exit"]]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.className = action === "entry" ? "button-secondary" : "";
+    button.addEventListener("click", () => updateBooking(booking.booking_id, action, box));
+    box.append(button);
+  }
+}
+
+async function updateBooking(bookingId, action, box) {
+  try {
+    const result = await api(`/bookings/${bookingId}/${action}`, { method: "POST" });
+    showMessage("bookingMessage", `Booking #${bookingId} updated to ${result.status}.`);
+    box.querySelector("strong").textContent = `Booking #${bookingId} · Status ${result.status}`;
+    await loadSlots();
+  } catch (error) {
+    showMessage("bookingMessage", error.message, true);
+  }
+}
+
+byId("historyForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const tbody = byId("historyRows");
+  showMessage("historyMessage", "");
+  try {
+    const plate = encodeURIComponent(cleanPlate(form.get("plate")));
+    const history = await api(`/vehicles/${plate}/history`);
+    tbody.replaceChildren();
+    if (!history.length) {
+      const row = tbody.insertRow();
+      const cell = row.insertCell();
+      cell.colSpan = 6;
+      cell.className = "empty";
+      cell.textContent = "No bookings found for this vehicle.";
+      return;
+    }
+    for (const booking of history) {
+      const row = tbody.insertRow();
+      for (const value of [booking.booking_id, booking.slot, booking.status,
+        formatDate(booking.booked_at), formatDate(booking.entry_time), formatDate(booking.exit_time)]) {
+        row.insertCell().textContent = value ?? "—";
+      }
+    }
+  } catch (error) {
+    showMessage("historyMessage", error.message, true);
+  }
+});
+
+function formatDate(value) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+}
+
+byId("refreshSlots").addEventListener("click", loadSlots);
+loadHealth();
+loadSlots();
+
+  </script>
+</body>
+</html>
