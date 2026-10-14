@@ -3,322 +3,1739 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SmartPark</title>
+  <meta name="theme-color" content="#f6f8f7">
+  <meta name="description" content="SmartPark — Intelligent Parking Management System.">
+  <title>SmartPark — Parking made simple</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
+/* Theme and shared components */
 :root {
-  color-scheme: light;
-  --ink: #17251f;
-  --muted: #697871;
-  --green: #176b4d;
-  --green-dark: #10553d;
-  --mint: #e7f4ed;
-  --line: #dfe8e2;
-  --paper: #fff;
-  --bg: #f4f7f5;
-  --red: #a83c36;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ink:#152a23;
+  --muted:#718078;
+  --line:#e4eae6;
+  --canvas:#f5f8f6;
+  --green:#167653;
+  --green-dark:#105d40;
+  --mint:#e4f3eb;
+  --lime:#d1f36a;
+  --amber:#fff4df;
+  --red:#fae9e7;
+  --shadow:0 14px 36px rgba(20,50,39,.08);
+  --radius:16px;
 }
-* { box-sizing: border-box; }
-body { margin: 0; color: var(--ink); background: var(--bg); }
+* {
+  box-sizing:border-box;
+}
+body {
+  margin:0;
+  background:var(--canvas);
+  color:var(--ink);
+  font-family:'DM Sans',Arial,sans-serif;
+  font-size:14px;
+}
+button,input,select {
+  font:inherit;
+}
+button {
+  cursor:pointer;
+}
 .topbar {
-  display: flex; justify-content: space-between; align-items: center; gap: 24px;
-  padding: 42px max(24px, calc((100vw - 1080px) / 2)); color: #fff;
-  background: linear-gradient(120deg, #123d30, #197552);
+  height:74px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 max(5vw,24px);
+  position:sticky;
+  top:0;
+  z-index:5;
 }
-.topbar h1 { margin: 4px 0 8px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.04em; }
-.subtitle { margin: 0; color: #d8eee3; }
-.eyebrow { margin: 0 0 7px; color: var(--green); font-size: .72rem; font-weight: 800; letter-spacing: .13em; }
-.topbar .eyebrow { color: #a8dfc2; }
-.badge { flex: none; padding: 9px 13px; border: 1px solid #ffffff55; border-radius: 999px; font-size: .82rem; }
-main { width: min(1080px, calc(100% - 32px)); margin: 28px auto; display: grid; gap: 18px; }
-.panel { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 5px 20px #183b2810; }
-.panel h2 { margin: 0 0 18px; font-size: 1.35rem; }
-.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.form-row { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
-label { display: grid; gap: 7px; min-width: min(220px, 100%); flex: 1; font-size: .88rem; font-weight: 650; }
-input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #cbd8cf; border-radius: 9px; color: var(--ink); background: #fff; font: inherit; }
-input:focus { outline: 3px solid #176b4d25; border-color: var(--green); }
-button { min-height: 44px; padding: 0 17px; border: 0; border-radius: 9px; color: #fff; background: var(--green); font: inherit; font-weight: 750; cursor: pointer; }
-button:hover { background: var(--green-dark); }
-button:disabled { opacity: .55; cursor: wait; }
-.button-secondary { color: var(--green-dark); background: var(--mint); }
-.button-secondary:hover { background: #d4ebdd; }
-.summary { margin: 0 0 14px; color: var(--muted); font-size: .9rem; }
-.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; }
-.slot { padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: #f8faf8; }
-.slot strong, .slot span { display: block; }
-.slot span { margin-top: 5px; color: var(--muted); font-size: .82rem; }
-.slot.available { border-color: #b7ddc7; background: #f0faf4; }
-.slot.occupied { border-color: #f0d1ce; background: #fff6f5; }
-.slot.out-of-service { color: var(--muted); background: #f1f2f1; }
-.message { min-height: 1.25em; margin: 12px 0 0; color: var(--green-dark); font-size: .9rem; }
-.message.error { color: var(--red); }
-.hint, footer { color: var(--muted); font-size: .84rem; }
-.hint { margin-bottom: 0; }
-.active-booking { margin-top: 12px; padding: 15px; border-radius: 10px; background: var(--mint); }
-.active-booking button { margin: 10px 8px 0 0; }
-.table-wrap { overflow-x: auto; margin-top: 12px; }
-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
-th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; }
-.empty { color: var(--muted); text-align: center; }
-footer { padding: 10px 16px 28px; text-align: center; }
-@media (max-width: 620px) {
-  .topbar { align-items: flex-start; flex-direction: column; padding: 30px 20px; }
-  .panel { padding: 19px; }
-  .form-row { align-items: stretch; flex-direction: column; }
-  .form-row label { min-width: 100%; }
-  .form-row button { width: 100%; }
+.brand {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  cursor:pointer;
 }
+.brand-mark {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--green);
+  color:#fff;
+  font-size:21px;
+}
+.brand-name {
+  font:800 18px Manrope,sans-serif;
+  letter-spacing:-.7px;
+}
+.brand-name span {
+  color:var(--green);
+}
+.brand-caption {
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.top-actions {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.location-chip,.role-chip {
+  border:1px solid var(--line);
+  border-radius:99px;
+  padding:9px 13px;
+  color:#567066;
+  background:#fff;
+  font-size:12px;
+}
+.location-chip b {
+  color:var(--green);
+}
+.role-chip {
+  background:#eff5f1;
+  color:var(--green);
+  font-weight:700;
+}
+.provider-header {
+  background:#f4f1e4;
+  color:#786c34;
+}
+.avatar {
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:var(--lime);
+  display:grid;
+  place-items:center;
+  font-weight:800;
+}
+.page {
+  max-width:1180px;
+  margin:0 auto;
+  padding:40px 24px 68px;
+}
+.page-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-bottom:27px;
+  gap:20px;
+}
+.eyebrow {
+  color:var(--green);
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1.35px;
+  margin:0 0 9px;
+}
+.page h1,.hero h1 {
+  font:800 clamp(30px,4vw,46px)/1.1 Manrope,sans-serif;
+  letter-spacing:-1.8px;
+  margin:0;
+}
+.subhead {
+  color:var(--muted);
+  margin:10px 0 0;
+  font-size:15px;
+}
+.hero {
+  max-width:1000px;
+  margin:0 auto;
+  padding:64px 24px 45px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:32px;
+  align-items:center;
+}
+.hero h1 {
+  font-size:clamp(44px,5.2vw,64px);
+  letter-spacing:-2.5px;
+}
+.hero h1 em {
+  font-style:normal;
+  color:var(--green);
+}
+.hero-copy {
+  max-width:490px;
+  color:#66756e;
+  font-size:16px;
+  line-height:1.75;
+  margin:20px 0 25px;
+}
+.location-note {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:16px;
+}
+.pulse {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#d0a34b;
+}
+.role-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-top:28px;
+}
+.role-card {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:23px;
+  text-align:left;
+  transition:.2s;
+  box-shadow:0 4px 18px #122c200c;
+  color:var(--ink);
+}
+.role-card:hover {
+  transform:translateY(-3px);
+  border-color:#a8cfb6;
+  box-shadow:var(--shadow);
+}
+.role-icon {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  background:var(--mint);
+  border-radius:14px;
+  color:var(--green);
+  font-size:23px;
+  margin-bottom:17px;
+}
+.role-card.provider .role-icon {
+  background:#f0eddf;
+  color:#817536;
+}
+.role-card strong {
+  font:700 17px Manrope,sans-serif;
+  display:block;
+}
+.role-card p {
+  color:var(--muted);
+  line-height:1.55;
+  margin:8px 0 17px;
+}
+.card-cta {
+  color:var(--green);
+  font-weight:700;
+}
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:24px;
+}
+.stat-card,.panel,.spot-card {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 4px 15px #15372808;
+}
+.stat-card {
+  padding:18px 20px;
+}
+.stat-label {
+  font-size:12px;
+  color:var(--muted);
+}
+.stat-value {
+  font:800 26px Manrope,sans-serif;
+  letter-spacing:-.8px;
+  margin-top:8px;
+}
+.stat-foot {
+  color:#85928b;
+  font-size:11px;
+  margin-top:3px;
+}
+.stat-value.green {
+  color:var(--green);
+}
+.toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:21px 0;
+}
+.tabs {
+  display:flex;
+  background:#edf1ee;
+  padding:4px;
+  border-radius:12px;
+  gap:3px;
+}
+.tab {
+  border:0;
+  background:transparent;
+  color:#74817a;
+  border-radius:9px;
+  padding:9px 13px;
+  font-size:12px;
+  font-weight:600;
+}
+.tab.active {
+  background:#fff;
+  color:var(--ink);
+  box-shadow:0 1px 4px #142b201a;
+}
+.btn {
+  border:0;
+  border-radius:10px;
+  padding:11px 15px;
+  background:var(--green);
+  color:#fff;
+  font-weight:700;
+  transition:.15s;
+}
+.btn:hover {
+  background:var(--green-dark);
+  transform:translateY(-1px);
+}
+.btn.secondary {
+  background:#eef4f0;
+  color:var(--green);
+}
+.btn.secondary:hover {
+  background:#e1eee6;
+}
+.btn.outline {
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--ink);
+}
+.btn.small {
+  padding:8px 11px;
+  font-size:12px;
+}
+.btn.danger {
+  background:var(--red);
+  color:#a43b34;
+}
+.search-row {
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 180px 180px auto;
+  gap:10px;
+  background:#fff;
+  border:1px solid var(--line);
+  padding:12px;
+  border-radius:15px;
+  margin:22px 0;
+}
+.field {
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px 12px;
+  background:#fff;
+  color:var(--ink);
+  outline:none;
+}
+.field:focus {
+  border-color:#83b69a;
+  box-shadow:0 0 0 3px #16765314;
+}
+.search-wrap {
+  position:relative;
+}
+.search-wrap .field {
+  padding-left:37px;
+}
+.search-icon {
+  position:absolute;
+  left:13px;
+  top:10px;
+  color:#9aa59f;
+}
+.spot-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+}
+.spot-card {
+  overflow:hidden;
+  transition:.18s;
+}
+.spot-card:hover {
+  box-shadow:var(--shadow);
+  transform:translateY(-2px);
+}
+.spot-image {
+  height:136px;
+  position:relative;
+  background:linear-gradient(140deg,#dfeae2,#c4d8cc);
+  overflow:hidden;
+}
+.spot-image:before {
+  content:'';
+  position:absolute;
+  width:180%;
+  height:60px;
+  top:42px;
+  left:-40%;
+  background:#f9fbf9;
+  transform:rotate(-14deg);
+}
+.spot-image:after {
+  content:'P';
+  position:absolute;
+  right:18px;
+  top:17px;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  border:2px solid #fff;
+  color:#fff;
+  font-size:18px;
+  font-weight:700;
+  background:#167653aa;
+}
+.lot-lines {
+  position:absolute;
+  left:15%;
+  right:10%;
+  bottom:0;
+  height:51px;
+  display:flex;
+  gap:9px;
+  align-items:flex-end;
+  z-index:1;
+}
+.lot-lines i {
+  flex:1;
+  border:1px solid #9eb5a5;
+  border-bottom:0;
+  height:39px;
+  transform:skew(-10deg);
+}
+.lot-car {
+  position:absolute;
+  z-index:2;
+  left:41%;
+  bottom:6px;
+  color:#35745b;
+  font-size:30px;
+}
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:99px;
+  padding:6px 9px;
+  font-size:10px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.badge.available,.badge.confirmed {
+  background:var(--mint);
+  color:var(--green);
+}
+.badge.occupied,.badge.pending {
+  background:var(--amber);
+  color:#a66b1e;
+}
+.badge.booked {
+  background:#e9edff;
+  color:#4d5eae;
+}
+.spot-image .badge {
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:3;
+  background:#fff;
+}
+.spot-body {
+  padding:17px;
+}
+.spot-title-row {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.spot-title {
+  font:700 15px Manrope,sans-serif;
+}
+.spot-location {
+  color:var(--muted);
+  font-size:12px;
+  margin-top:5px;
+}
+.spot-price {
+  font:800 19px Manrope,sans-serif;
+  white-space:nowrap;
+}
+.spot-price small {
+  font:400 11px 'DM Sans',sans-serif;
+  color:var(--muted);
+}
+.spot-meta {
+  display:flex;
+  gap:13px;
+  margin:15px 0;
+  color:#64736b;
+  font-size:11px;
+}
+.spot-footer {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-top:1px solid var(--line);
+  padding-top:13px;
+}
+.panel {
+  padding:21px;
+}
+.panel h2 {
+  font:700 17px Manrope,sans-serif;
+  margin:0;
+}
+.panel-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:17px;
+}
+.table-wrap {
+  overflow:auto;
+}
+table {
+  width:100%;
+  border-collapse:collapse;
+  text-align:left;
+}
+th {
+  font-size:10px;
+  color:#89958e;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  font-weight:700;
+  padding:12px 10px;
+  border-bottom:1px solid var(--line);
+}
+td {
+  padding:14px 10px;
+  border-bottom:1px solid #f0f2f1;
+  font-size:12px;
+}
+tr:last-child td {
+  border-bottom:0;
+}
+.td-title {
+  font-weight:700;
+}
+.td-muted {
+  color:var(--muted);
+  margin-top:4px;
+  font-size:11px;
+}
+.section-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:17px;
+}
+.provider-toolbar {
+  display:flex;
+  gap:8px;
+}
+.slot-list {
+  display:grid;
+  gap:10px;
+}
+.slot-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:13px;
+}
+.slot-info {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.slot-icon {
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#f0f4f1;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+}
+.slot-name {
+  font-weight:700;
+  font-size:13px;
+}
+.slot-sub {
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.slot-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.empty-state {
+  text-align:center;
+  padding:48px 20px;
+  color:var(--muted);
+}
+.empty-state strong {
+  display:block;
+  color:var(--ink);
+  font:700 17px Manrope,sans-serif;
+  margin:10px;
+}
+.empty-icon {
+  font-size:32px;
+}
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:10;
+  background:#14282070;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  backdrop-filter:blur(3px);
+}
+.modal {
+  width:min(520px,100%);
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 25px 90px #10281d40;
+  padding:24px;
+  max-height:90vh;
+  overflow:auto;
+  animation:pop .18s ease-out;
+}
+@keyframes pop {
+  from {
+    transform:translateY(7px);
+    opacity:.6;
+  }
+  to {
+    transform:none;
+    opacity:1;
+  }
+}
+.modal-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:15px;
+  margin-bottom:20px;
+}
+.modal-head h2 {
+  font:800 21px Manrope,sans-serif;
+  margin:0;
+}
+.modal-head p {
+  color:var(--muted);
+  font-size:12px;
+  margin:6px 0 0;
+}
+.close-btn {
+  border:0;
+  background:#f0f3f1;
+  border-radius:9px;
+  width:32px;
+  height:32px;
+  color:#637168;
+  font-size:18px;
+}
+.form-stack {
+  display:grid;
+  gap:14px;
+}
+.form-label {
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  color:#66736c;
+  margin-bottom:7px;
+}
+.form-two {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.checkout-total {
+  background:#f2f6f3;
+  border-radius:13px;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:17px 0;
+}
+.checkout-total strong {
+  font:800 22px Manrope,sans-serif;
+}
+.payment-method {
+  display:flex;
+  gap:9px;
+}
+.pay-option {
+  flex:1;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px;
+  background:#fff;
+  text-align:left;
+  font-size:12px;
+}
+.pay-option.selected {
+  border-color:var(--green);
+  background:#f0f7f2;
+}
+.receipt {
+  border:1px dashed #b9ccc0;
+  border-radius:14px;
+  padding:18px;
+  background:#fbfdfb;
+}
+.receipt-brand {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font:800 16px Manrope,sans-serif;
+  color:var(--green);
+}
+.receipt-id {
+  font:700 11px monospace;
+  color:#6f7c74;
+}
+.receipt-total {
+  display:flex;
+  justify-content:space-between;
+  border-top:1px solid var(--line);
+  padding-top:13px;
+  margin-top:13px;
+  font-weight:700;
+}
+.receipt-line {
+  display:flex;
+  justify-content:space-between;
+  padding:7px 0;
+  font-size:12px;
+}
+.receipt-line span:first-child {
+  color:var(--muted);
+}
+.toast-region {
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  z-index:20;
+  display:grid;
+  gap:9px;
+}
+.toast {
+  background:#16382a;
+  color:#fff;
+  padding:12px 16px;
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  font-size:12px;
+  animation:pop .2s ease-out;
+}
+.footer-note {
+  border-top:1px solid var(--line);
+  padding:18px 24px;
+  text-align:center;
+  color:#87938c;
+  font-size:11px;
+}
+.footer-note strong {
+  color:#62756b;
+}
+.receipt-actions {
+  display:flex;
+  gap:9px;
+  margin-top:15px;
+}
+.full {
+  width:100%;
+}
+.vehicle-card {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:14px;
+}
+.vehicle-plate {
+  font:800 13px Manrope,sans-serif;
+  letter-spacing:.8px;
+}
+.vehicle-type {
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.tiny {
+  font-size:11px;
+  color:var(--muted);
+}
+@media(max-width:850px) {
+  .hero {
+    grid-template-columns:1fr;
+    gap:30px;
+    padding-top:42px;
+  }
+  .spot-grid {
+    grid-template-columns:repeat(2,1fr);
+  }
+  .stats-grid {
+    grid-template-columns:repeat(2,1fr);
+  }
+  .search-row {
+    grid-template-columns:1fr 1fr;
+  }
+  .search-row .search-wrap {
+    grid-column:span 2;
+  }
+  .section-grid {
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:560px) {
+  .topbar {
+    height:66px;
+    padding:0 16px;
+  }
+  .location-chip {
+    display:none;
+  }
+  .page {
+    padding:30px 16px 48px;
+  }
+  .hero {
+    padding:42px 16px 30px;
+  }
+  .hero h1 {
+    font-size:43px;
+  }
+  .role-grid {
+    grid-template-columns:1fr;
+  }
+  .spot-grid {
+    grid-template-columns:1fr;
+  }
+  .search-row {
+    grid-template-columns:1fr;
+  }
+  .search-row .search-wrap {
+    grid-column:auto;
+  }
+  .page-head {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .provider-toolbar {
+    width:100%;
+  }
+  .provider-toolbar .btn {
+    flex:1;
+  }
+  .toolbar {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .tabs {
+    max-width:100%;
+    overflow:auto;
+  }
+  .tab {
+    white-space:nowrap;
+  }
+  .form-two {
+    grid-template-columns:1fr;
+  }
+  .top-actions {
+    gap:7px;
+  }
+  .role-chip {
+    font-size:10px;
+    padding:8px;
+  }
+  .stat-card {
+    padding:14px;
+  }
+  .stat-value {
+    font-size:22px;
+  }
+  .slot-row {
+    align-items:flex-start;
+  }
+  .slot-actions {
+    flex-direction:column;
+    align-items:flex-end;
+  }
+}
+.auth-page {
+  min-height:calc(100vh - 140px);
+  display:grid;
+  place-items:center;
+  padding:44px 20px;
+  background:radial-gradient(ellipse at 50% 0%,#e4f3eb 0,transparent 55%);
+}
+.auth-card {
+  width:min(460px,100%);
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:30px;
+  box-shadow:var(--shadow);
+}
+.auth-heading {
+  text-align:center;
+  margin-bottom:22px;
+}
+.auth-heading .role-icon {
+  margin:0 auto 15px;
+}
+.auth-heading .eyebrow {
+  margin-bottom:8px;
+}
+.auth-heading h1 {
+  font:800 28px Manrope,sans-serif;
+  letter-spacing:-.8px;
+  margin:0;
+}
+.auth-heading p:last-child {
+  color:var(--muted);
+  margin:9px 0 0;
+}
+.auth-switch {
+  display:flex;
+  background:#eef3ef;
+  padding:4px;
+  border-radius:11px;
+  margin:20px 0;
+}
+.auth-switch .tab {
+  flex:1;
+}
+.auth-footnote {
+  text-align:center;
+  font-size:11px;
+  line-height:1.5;
+  color:var(--muted);
+  margin:16px 0 0;
+}
+.auth-card .form-stack {
+  gap:13px;
+}
+@media(max-width:560px) {
+  .auth-page {
+    padding:28px 15px;
+  }
+  .auth-card {
+    padding:23px;
+    border-radius:18px;
+  }
+  .auth-heading h1 {
+    font-size:25px;
+  }
+}
+:focus-visible {
+  outline:3px solid #83b69a;
+  outline-offset:3px;
+}
+.brand {
+  cursor:pointer;
+}
+.hero {
+  max-width:1180px;
+  min-height:calc(100vh - 150px);
+  grid-template-columns:1.05fr .95fr;
+  gap:56px;
+  padding-top:52px;
+}
+.hero:before {
+  content:'P';
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  place-items:center;
+  min-height:340px;
+  border-radius:28px;
+  background:radial-gradient(circle at 50% 45%,#fff 0 12%,transparent 12.5%),linear-gradient(145deg,#e6f2e9,#c9dfd1);
+  font:800 160px Manrope,sans-serif;
+  color:#167653;
+  box-shadow:inset 0 0 0 1px #d5e4d9;
+}
+.hero>div {
+  grid-column:1;
+  grid-row:1;
+}
+.hero h1 {
+  font-size:clamp(48px,5.5vw,70px);
+}
+.hero-copy {
+  max-width:540px;
+}
+.topbar {
+  box-shadow:0 2px 14px #15372806;
+}
+.role-card {
+  min-height:220px;
+}
+.page {
+  padding-top:34px;
+}
+.spot-image {
+  background:linear-gradient(145deg,#dfeae2,#b9d2c3);
+}
+.footer-note {
+  background:#fff;
+}
+@media(max-width:850px) {
+  .hero {
+    grid-template-columns:1fr;
+    min-height:auto;
+    gap:28px;
+  }
+  .hero:before {
+    grid-column:1;
+    grid-row:2;
+    min-height:230px;
+    font-size:110px;
+  }
+  .hero>div {
+    grid-row:1;
+  }
+  .hero h1 {
+    font-size:clamp(42px,8vw,60px);
+  }
+}
+@media print {
+  body * {
+    visibility:hidden;
+  }
+  .modal-backdrop,.modal-backdrop * {
+    visibility:visible;
+  }
+  .modal-backdrop {
+    position:absolute;
+    inset:0;
+    background:#fff;
+    padding:0;
+  }
+  .modal {
+    box-shadow:none;
+    width:100%;
+    max-height:none;
+  }
+  .receipt-actions,.close-btn {
+    display:none;
+  }
+}
+</style>
 
-  </style>
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">SMARTPARK</p>
-      <h1>Parking, made simple.</h1>
-      <p class="subtitle">Register your vehicle, find a space, and manage your visit.</p>
-    </div>
-    <span id="connectionBadge" class="badge">Connecting…</span>
-  </header>
+  <div id="app" class="app-shell"></div>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <script>// App state and storage
+const STORAGE_KEY='smartpark-app-v3';
 
-  <main>
-    <section class="panel">
-      <div class="section-heading">
-        <div><p class="eyebrow">YOUR VEHICLE</p><h2>Register vehicle</h2></div>
-      </div>
-      <form id="vehicleForm" class="form-row">
-        <label>Owner name
-          <input name="owner_name" required maxlength="100" placeholder="e.g. Asha Sharma">
-        </label>
-        <label>Number plate
-          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="e.g. DL8CAF1234" autocomplete="off" autocapitalize="characters">
-        </label>
-        <button type="submit">Register</button>
-      </form>
-      <p id="vehicleMessage" class="message" role="status"></p>
-    </section>
-
-    <section class="panel">
-      <div class="section-heading">
-        <div><p class="eyebrow">LIVE PARKING</p><h2>Parking slots</h2></div>
-        <button id="refreshSlots" class="button-secondary" type="button">Refresh</button>
-      </div>
-      <div id="slotSummary" class="summary"></div>
-      <div id="slotGrid" class="slot-grid" aria-live="polite"></div>
-      <p class="hint">Register your vehicle before requesting a slot.</p>
-    </section>
-
-    <section class="panel">
-      <div><p class="eyebrow">PARKING REQUEST</p><h2>Book a slot</h2></div>
-      <form id="bookingForm" class="form-row">
-        <label>Registered number plate
-          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="Enter your plate" autocomplete="off" autocapitalize="characters">
-        </label>
-        <button type="submit">Book a slot</button>
-      </form>
-      <p id="bookingMessage" class="message" role="status"></p>
-      <div id="activeBooking" class="active-booking" hidden></div>
-    </section>
-
-    <section class="panel">
-      <div><p class="eyebrow">YOUR VISITS</p><h2>Booking history</h2></div>
-      <form id="historyForm" class="form-row">
-        <label>Number plate
-          <input name="plate" required maxlength="16" pattern="[A-Za-z]{2}[0-9]{1,2}[A-Za-z]{1,8}[0-9]{4}" title="Format: 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits. Example: DL8CAF1234" placeholder="Enter your plate" autocomplete="off" autocapitalize="characters">
-        </label>
-        <button type="submit" class="button-secondary">View history</button>
-      </form>
-      <p id="historyMessage" class="message" role="status"></p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Booking</th><th>Slot</th><th>Status</th><th>Booked</th><th>Entry</th><th>Exit</th></tr></thead>
-          <tbody id="historyRows"><tr><td colspan="6" class="empty">Enter a plate to view its history.</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-  <footer>SmartPark · OS + DBMS Project</footer>
-  <script>
-// Set this URL to the Flask server address used by the team.
-const API_BASE = "http://127.0.0.1:5000/api";
-const byId = (id) => document.getElementById(id);
-
-async function api(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
-  return body;
-}
-
-function showMessage(id, text, isError = false) {
-  const element = byId(id);
-  element.textContent = text;
-  element.classList.toggle("error", isError);
-}
-
-function cleanPlate(value) {
-  const plate = value.trim().replace(/\s+/g, "").toUpperCase();
-  if (!/^[A-Z]{2}[0-9]{1,2}[A-Z]{1,8}[0-9]{4}$/.test(plate)) {
-    throw new Error("Use 2 state letters, 1-2 RTO digits, 1-8 series letters, then exactly 4 digits (example: DL8CAF1234).");
+const seed= {
+  spaces:[
+  {
+    id:'SP-101',name:'Clock Tower Smart Parking',address:'MDDA Complex, Rajpur Road, Dehradun',area:'Clock Tower',price:30,capacity:40,available:18,kind:'Covered',hours:'Open 24 hours',rating:'4.8'
+  },
+  {
+    id:'SP-102',name:'Parade Ground Parking',address:'Parade Ground, Dehradun',area:'Parade Ground',price:25,capacity:32,available:11,kind:'Open air',hours:'6:00 AM – 10:00 PM',rating:'4.7'
+  },
+  {
+    id:'SP-103',name:'Railway Station Parking',address:'Dehradun Railway Station, Haridwar Road',area:'Railway Station',price:30,capacity:36,available:14,kind:'Covered',hours:'Open 24 hours',rating:'4.6'
+  },
+  {
+    id:'SP-104',name:'Rajpur Road Central Parking',address:'Rajpur Road, near Clock Tower, Dehradun',area:'Rajpur Road',price:35,capacity:28,available:9,kind:'Covered',hours:'5:00 AM – 12:00 AM',rating:'4.9'
+  },
+  {
+    id:'SP-105',name:'Pacific Mall Parking',address:'Pacific Mall, Rajpur Road, Dehradun',area:'Jakhan',price:20,capacity:50,available:23,kind:'Covered',hours:'10:00 AM – 10:00 PM',rating:'4.5'
+  },
+  {
+    id:'SP-106',name:'ISBT Dehradun Parking',address:'Inter State Bus Terminal, Shimla Bypass Road',area:'ISBT',price:20,capacity:30,available:12,kind:'Open air',hours:'Open 24 hours',rating:'4.8'
+  },
+  {
+    id:'SP-107',name:'Paltan Bazaar Parking',address:'Paltan Bazaar, near Clock Tower, Dehradun',area:'Paltan Bazaar',price:25,capacity:20,available:6,kind:'Open air',hours:'8:00 AM – 9:00 PM',rating:'4.6'
+  },
+  {
+    id:'SP-108',name:'Dilaram Bazaar Parking',address:'Rajpur Road, Dilaram Bazaar, Dehradun',area:'Dilaram Bazaar',price:25,capacity:24,available:10,kind:'Open air',hours:'6:00 AM – 11:00 PM',rating:'4.7'
   }
-  return plate;
-}
+  ],
+  vehicles:[ {
+    id:'VH-01',plate:'KA 03 MN 4821',model:'Hyundai i20',type:'Car'
+  }],
+  bookings:[],
+  receipts:[],
+  providerSpaces:[
+  {
+    id:'MY-201',name:'Doon Campus Parking',address:'Graphic Era Road, Clement Town, Dehradun',area:'Clement Town',price:25,capacity:18,available:11,kind:'Open air',hours:'8:00 AM – 8:00 PM'
+  },
+  {
+    id:'MY-202',name:'Rajpur Road Parking',address:'Rajpur Road, Dehradun',area:'Rajpur Road',price:30,capacity:10,available:6,kind:'Covered',hours:'Open 24 hours'
+  }
+  ]
+};
 
-document.querySelectorAll('input[name="plate"]').forEach((input) => {
-  input.addEventListener("input", () => {
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    input.value = input.value.toUpperCase();
-    input.setSelectionRange(start, end);
-  });
-});
+let state=loadState(), role=null, authMode='login', driverPage='spots', providerPage='overview', query='', areaFilter='All areas', maxPrice='Any price', modal=null, paymentMethod='UPI';
 
-async function loadHealth() {
-  const badge = byId("connectionBadge");
+function loadState() {
   try {
-    await api("/health");
-    badge.textContent = "Backend connected";
-  } catch {
-    badge.textContent = "Backend unavailable";
+    return JSON.parse(localStorage.getItem(STORAGE_KEY))||structuredClone(seed)
+  }catch {
+    return structuredClone(seed)
   }
 }
+state.accounts ||= [];
 
-async function loadSlots() {
-  const grid = byId("slotGrid");
-  const summary = byId("slotSummary");
-  grid.textContent = "Loading slots…";
-  try {
-    const slots = await api("/slots");
-    const available = slots.filter((slot) => slot.status === "AVAILABLE").length;
-    summary.textContent = `${available} of ${slots.length} slots available`;
-    grid.replaceChildren();
-    for (const slot of slots) {
-      const card = document.createElement("div");
-      card.className = `slot ${slot.status.toLowerCase().replaceAll("_", "-")}`;
-      const name = document.createElement("strong");
-      name.textContent = slot.label;
-      const detail = document.createElement("span");
-      detail.textContent = `${slot.slot_type} · ${slot.status.replaceAll("_", " ")}`;
-      card.append(name, detail);
-      grid.append(card);
-    }
-    if (!slots.length) grid.textContent = "No parking slots have been added yet.";
-  } catch (error) {
-    grid.textContent = "Could not load slots. Check that the Flask server is running.";
-    summary.textContent = error.message;
-  }
+function save() {
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state))
 }
+function escapeHtml(s='') {
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function money(n){return '₹'+Number(n).toLocaleString('en-IN')}
+function allSpaces(){return [...state.spaces,...state.providerSpaces]}
+function toast(message){const region=document.querySelector('#toast-region');
+if(!region)return;
+const el=document.createElement('div');
+el.className='toast';
+el.textContent=message;
+region.append(el);
+setTimeout(()=>el.remove(),2900)}
+// Shared layout and page rendering
+function render(){const root=document.querySelector('#app');
+root.innerHTML=role?(authMode==='workspace'?appLayout():authPage()):landing();
+if(modal)renderModal()}
+function brand(){return `<div class="brand" onclick="goHome()">
+<div class="brand-mark">P</div>
+<div>
+<div class="brand-name">smart<span>park</span>
+</div>
+<span class="brand-caption">Intelligent parking management</span>
+</div>
+</div>`}
+function landing(){return `<header class="topbar">${brand()}<div class="top-actions">
+</div>
+</header>
+<main>
+<section class="hero">
+<div>
+<h1>SmartPark<br>
+<em>Parking made simple.</em>
+</h1>
+<div class="role-grid">
+<button class="role-card" onclick="enterRole('driver')">
+<div class="role-icon">⌖</div>
+<strong>I’m a driver</strong>
+<p>Find nearby parking, book a spot, and keep every trip in one place.</p>
+<span class="card-cta">Continue as driver →</span>
+</button>
+<button class="role-card provider" onclick="enterRole('provider')">
+<div class="role-icon">▦</div>
+<strong>I provide parking</strong>
+<p>List your space, manage availability, and issue driver receipts.</p>
+<span class="card-cta">Continue as provider →</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<footer class="footer-note">
+<strong>SmartPark</strong> · Intelligent Parking Management System · Parking made simple</footer>`}
+function authPage(){const provider=role==='provider',title=provider?'Parking Space Provider':'Driver';
+return `<header class="topbar">${brand()}<div class="top-actions">
+<button class="btn outline small" onclick="goHome()">← Choose role</button>
+</div>
+</header>
+<main class="auth-page">
+<section class="auth-card">
+<div class="auth-heading">
+<div class="role-icon">${provider?'▦':'⌖'}</div>
+<p class="eyebrow">${title} account</p>
+<h1>${authMode==='register'?'Create your account':'Welcome back'}</h1>
+<p>${authMode==='register'?'Register to continue to your SmartPark workspace.':'Sign in to continue to your SmartPark workspace.'}</p>
+</div>
+<div class="auth-switch">
+<button class="tab ${authMode==='login'?'active':''}" onclick="setAuthMode('login')">Sign in</button>
+<button class="tab ${authMode==='register'?'active':''}" onclick="setAuthMode('register')">Create account</button>
+</div>
+<form class="form-stack" onsubmit="submitAuth(event)">${authMode==='register'?`<label>
+<span class="form-label">${provider?'Provider or business name':'Full name'}</span>
+<input class="field" name="name" autocomplete="name" placeholder="${provider?'e.g. City Parking':'Your name'}" required>
+</label>`:''}<label>
+<span class="form-label">Email address</span>
+<input class="field" name="email" type="email" autocomplete="email" placeholder="name@example.com" required>
+</label>${authMode==='register'&&provider?`<label>
+<span class="form-label">Contact number</span>
+<input class="field" name="phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" required>
+</label>`:''}<label>
+<span class="form-label">Password</span>
+<input class="field" name="password" type="password" autocomplete="${authMode==='register'?'new-password':'current-password'}" minlength="6" placeholder="At least 6 characters" required>
+</label>${authMode==='register'?`<label>
+<span class="form-label">Confirm password</span>
+<input class="field" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter your password again" required>
+</label>`:''}<button class="btn full" type="submit">${authMode==='register'?'Create account':'Sign in'} →</button>
+</form>
+</section>
+</main>
+<footer class="footer-note">SmartPark · Parking made simple</footer>`}
+function setAuthMode(mode){authMode=mode;
+render()}
+function submitAuth(e){e.preventDefault();
+const fd=new FormData(e.target),email=String(fd.get('email')).trim().toLowerCase(),password=String(fd.get('password'));
+if(password.length<6){toast('Use a password with at least 6 characters');
+return}if(authMode==='register'){if(password!==fd.get('confirmPassword')){toast('The passwords do not match');
+return}const exists=state.accounts.some(a=>a.email===email&&a.role===role);
+if(exists){toast('An account with this email already exists for this role');
+return}state.accounts.push({id:'AC-'+Date.now(),name:String(fd.get('name')).trim(),email,phone:String(fd.get('phone')||''),password,role});
+save();
+toast('Account created')}else{const existing=state.accounts.find(a=>a.email===email&&a.role===role);
+if(existing&&existing.password&&existing.password!==password){toast('Email or password is incorrect');
+return}if(!existing){toast('No account found. Create an account to continue');
+return}if(existing.password!==password){toast('Email or password is incorrect');
+return}toast('Signed in')}authMode='workspace';
+render();
+window.scrollTo(0,0)}
+function appLayout(){return `<header class="topbar">${brand()}<div class="top-actions">
+<span class="location-chip">
+<b>●</b> &nbsp;Dehradun</span>
+<span class="role-chip ${role==='provider'?'provider-header':''}">${role==='driver'?'Driver workspace':'Provider workspace'}</span>
+<div class="avatar">${role==='driver'?'D':'P'}</div>
+<button class="btn outline small" onclick="goHome()">Switch role</button>
+</div>
+</header>${role==='driver'?driverView():providerView()}<footer class="footer-note">SmartPark · Intelligent Parking Management</footer>`}
+function stat(label,value,foot='',green=false){return `<div class="stat-card">
+<div class="stat-label">${label}</div>
+<div class="stat-value ${green?'green':''}">${value}</div>
+<div class="stat-foot">${foot}</div>
+</div>`}
+function driverView(){const active=state.bookings.filter(b=>b.status==='Confirmed').length;
+const available=allSpaces().reduce((n,s)=>n+s.available,0);
+return `<main class="page">
+<div class="page-head">
+<div>
+<p class="eyebrow">Driver dashboard</p>
+<h1>${driverPage==='spots'?'Find your parking spot':driverPage==='bookings'?'Your bookings':'Your vehicles'}</h1>
+<p class="subhead">${driverPage==='spots'?'Search available parking spots across Dehradun.':driverPage==='bookings'?'Your confirmed and past parking sessions.':'Keep your vehicles ready for a quick booking.'}</p>
+</div>
+<button class="btn secondary" onclick="openVehicleModal()">＋ Add vehicle</button>
+</div>
+<div class="stats-grid">${stat('Available spots',available,'Across Dehradun',true)}${stat('Active bookings',active,'Your upcoming parking')}${stat('Registered vehicles',state.vehicles.length,'Ready to book')}${stat('Your saved time','2.5 hrs','This month')}</div>
+<div class="toolbar">
+<div class="tabs">
+<button class="tab ${driverPage==='spots'?'active':''}" onclick="setDriverPage('spots')">Find parking</button>
+<button class="tab ${driverPage==='bookings'?'active':''}" onclick="setDriverPage('bookings')">My bookings ${active?`(${active})`:''}</button>
+<button class="tab ${driverPage==='vehicles'?'active':''}" onclick="setDriverPage('vehicles')">My vehicles</button>
+</div>
+<span class="tiny">📍 Dehradun, Uttarakhand</span>
+</div>${driverPage==='spots'?spotsView():driverPage==='bookings'?bookingsView():vehiclesView()}</main>`}
+function filteredSpaces(){return allSpaces().filter(s=>s.available>0&&(!query||`${s.name} ${s.address} ${s.area}`.toLowerCase().includes(query.toLowerCase()))&&(areaFilter==='All areas'||s.area===areaFilter)&&(maxPrice==='Any price'||s.price<=Number(maxPrice)))}
+function spotsView(){const areas=['All areas',...new Set(allSpaces().map(s=>s.area))];
+return `<div class="search-row">
+<div class="search-wrap">
+<span class="search-icon">⌕</span>
+<input class="field" placeholder="Search area, landmark or parking" value="${escapeHtml(query)}" oninput="query=this.value;refreshSpots()">
+</div>
+<select class="field" onchange="areaFilter=this.value;refreshSpots()">${areas.map(a=>`<option ${a===areaFilter?'selected':''}>${escapeHtml(a)}</option>`).join('')}</select>
+<select class="field" onchange="maxPrice=this.value;refreshSpots()">
+<option value="Any price">Any price</option>
+<option value="25" ${maxPrice==='25'?'selected':''}>Up to ₹25 / hr</option>
+<option value="35" ${maxPrice==='35'?'selected':''}>Up to ₹35 / hr</option>
+<option value="45" ${maxPrice==='45'?'selected':''}>Up to ₹45 / hr</option>
+</select>
+<button class="btn secondary" onclick="query='';areaFilter='All areas';maxPrice='Any price';render()">↻ Reset</button>
+</div>
+<div class="page-head" style="margin:0 0 14px">
+<span class="tiny">
+<b>${filteredSpaces().length} spots</b> available now</span>
+<span class="tiny">Sorted by relevance</span>
+</div>
+<div class="spot-grid">${filteredSpaces().map(spotCard).join('')||`<div class="panel empty-state" style="grid-column:1/-1">
+<div class="empty-icon">⌕</div>
+<strong>No parking spots found</strong>Try changing your area or price filters.</div>`}</div>`}
+function spotCard(s){return `<article class="spot-card">
+<div class="spot-image">
+<span class="badge available">● ${s.available} spots left</span>
+<div class="lot-lines">
+<i>
+</i>
+<i>
+</i>
+<i>
+</i>
+<i>
+</i>
+</div>
+<div class="lot-car">🚙</div>
+</div>
+<div class="spot-body">
+<div class="spot-title-row">
+<div>
+<div class="spot-title">${escapeHtml(s.name)}</div>
+<div class="spot-location">⌖ ${escapeHtml(s.address)}</div>
+</div>
+<div class="spot-price">${money(s.price)}<small>/hr</small>
+</div>
+</div>
+<div class="spot-meta">
+<span>▣ ${escapeHtml(s.kind)}</span>
+<span>★ ${s.rating||'4.7'}</span>
+<span>◷ ${escapeHtml(s.hours)}</span>
+</div>
+<div class="spot-footer">
+<span class="tiny">${s.capacity-s.available}/${s.capacity} occupied</span>
+<button class="btn small" onclick="startBooking('${s.id}')">Book this spot</button>
+</div>
+</div>
+</article>`}
+function refreshSpots(){const anchor=document.querySelector('.search-row');
+if(anchor){const y=window.scrollY;
+render();
+window.scrollTo(0,y)}}
+function bookingsView(){if(!state.bookings.length)return `<div class="panel empty-state">
+<div class="empty-icon">▤</div>
+<strong>No bookings yet</strong>Find a spot and book your first parking session.</div>`;
+return `<div class="panel">
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Parking spot</th>
+<th>Date & time</th>
+<th>Vehicle</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Receipt</th>
+</tr>
+</thead>
+<tbody>${state.bookings.map(b=>`<tr>
+<td>
+<div class="td-title">${escapeHtml(b.spaceName)}</div>
+<div class="td-muted">${escapeHtml(b.address)}</div>
+</td>
+<td>${escapeHtml(b.date)}<div class="td-muted">${escapeHtml(b.start)} – ${escapeHtml(b.end)}</div>
+</td>
+<td>${escapeHtml(b.plate)}</td>
+<td class="td-title">${money(b.amount)}</td>
+<td>
+<span class="badge ${b.status.toLowerCase()}">${b.status}</span>
+</td>
+<td>
+<button class="btn secondary small" onclick="showReceipt('${b.id}')">View</button>
+</td>
+</tr>`).join('')}</tbody>
+</table>
+</div>
+</div>`}
+function vehiclesView(){return `<div class="section-grid">
+<div class="panel">
+<div class="panel-head">
+<h2>Registered vehicles</h2>
+<button class="btn small" onclick="openVehicleModal()">＋ Add</button>
+</div>
+<div class="slot-list">${state.vehicles.map(v=>`<div class="vehicle-card">
+<div class="slot-info">
+<div class="slot-icon">🚙</div>
+<div>
+<div class="vehicle-plate">${escapeHtml(v.plate)}</div>
+<div class="vehicle-type">${escapeHtml(v.model)} · ${escapeHtml(v.type)}</div>
+</div>
+</div>
+<button class="btn outline small" onclick="removeVehicle('${v.id}')">Remove</button>
+</div>`).join('')||`<div class="empty-state">No vehicles added yet.</div>`}</div>
+</div>
+<div class="panel">
+<h2>Quick tip</h2>
+<p class="subhead" style="font-size:13px;line-height:1.7">Add your vehicle registration once and it will be ready at checkout for every future booking. Your vehicle list is saved in this browser.</p>
+</div>
+</div>`}
+function providerView(){const spaces=state.providerSpaces;
+const total=spaces.reduce((n,s)=>n+s.capacity,0),free=spaces.reduce((n,s)=>n+s.available,0),occupied=total-free;
+return `<main class="page">
+<div class="page-head">
+<div>
+<p class="eyebrow">Your parking business</p>
+<h1>${providerPage==='overview'?'Provider overview':providerPage==='spaces'?'Manage your spaces':'Driver receipts'}</h1>
+<p class="subhead">${providerPage==='overview'?'Manage your parking listings and driver bookings.':providerPage==='spaces'?'Control pricing, capacity, and slot availability.':'Issue and view receipts for driver bookings.'}</p>
+</div>
+<div class="provider-toolbar">
+<button class="btn secondary" onclick="setProviderPage('receipts')">▤ Receipts</button>
+<button class="btn" onclick="openSpaceModal()">＋ List a space</button>
+</div>
+</div>
+<div class="stats-grid">${stat('Your spaces',spaces.length,'Active listings')}${stat('Available slots',free,'Ready for drivers',true)}${stat('Occupied slots',occupied,'Manually managed')}${stat('Provider earnings',money(state.bookings.filter(b=>spaces.some(s=>s.id===b.spaceId)).reduce((n,b)=>n+b.amount,0)),'From confirmed bookings')}</div>
+<div class="toolbar">
+<div class="tabs">
+<button class="tab ${providerPage==='overview'?'active':''}" onclick="setProviderPage('overview')">Overview</button>
+<button class="tab ${providerPage==='spaces'?'active':''}" onclick="setProviderPage('spaces')">My spaces</button>
+<button class="tab ${providerPage==='receipts'?'active':''}" onclick="setProviderPage('receipts')">Bookings & receipts</button>
+</div>
+<span class="tiny">Update availability as spaces are occupied or freed</span>
+</div>${providerPage==='overview'?providerOverview():providerPage==='spaces'?providerSpacesView():providerReceipts()}</main>`}
+function providerOverview(){return `<div class="section-grid">
+<div class="panel">
+<div class="panel-head">
+<h2>Space availability</h2>
+<button class="btn outline small" onclick="setProviderPage('spaces')">Manage all →</button>
+</div>
+<div class="slot-list">${state.providerSpaces.map(spaceRow).join('')}</div>
+</div>
+<div class="panel">
+<div class="panel-head">
+<h2>Recent bookings</h2>
+<button class="btn outline small" onclick="setProviderPage('receipts')">View all →</button>
+</div>${state.bookings.length?`<div class="slot-list">${state.bookings.slice(0,4).map(b=>`<div class="slot-row">
+<div class="slot-info">
+<div class="slot-icon">🚙</div>
+<div>
+<div class="slot-name">${escapeHtml(b.driverName||'Prateek Pandey')} · ${escapeHtml(b.plate)}</div>
+<div class="slot-sub">${escapeHtml(b.spaceName)} · ${escapeHtml(b.date)}</div>
+</div>
+</div>
+<button class="btn secondary small" onclick="showReceipt('${b.id}')">Receipt</button>
+</div>`).join('')}</div>`:`<div class="empty-state">
+<div class="empty-icon">▤</div>
+<strong>No bookings yet</strong>Driver bookings will appear here.</div>`}</div>
+</div>`}
+function spaceRow(s){return `<div class="slot-row">
+<div class="slot-info">
+<div class="slot-icon">▦</div>
+<div>
+<div class="slot-name">${escapeHtml(s.name)}</div>
+<div class="slot-sub">${escapeHtml(s.address)} · ${money(s.price)}/hr</div>
+</div>
+</div>
+<div class="slot-actions">
+<span class="badge ${s.available?'available':'occupied'}">${s.available} / ${s.capacity} free</span>
+<button class="btn outline small" onclick="adjustAvailability('${s.id}',-1)" title="Mark one slot occupied">−</button>
+<button class="btn outline small" onclick="adjustAvailability('${s.id}',1)" title="Mark one slot available">＋</button>
+</div>
+</div>`}
+function providerSpacesView(){return `<div class="panel">
+<div class="panel-head">
+<h2>Your listed parking spaces</h2>
+<button class="btn small" onclick="openSpaceModal()">＋ Add space</button>
+</div>
+<div class="slot-list">${state.providerSpaces.map(s=>`${spaceRow(s)}<div class="tiny" style="padding:0 12px 8px">${escapeHtml(s.area)} · ${escapeHtml(s.kind)} · ${escapeHtml(s.hours)}</div>`).join('')}</div>
+</div>`}
+function providerReceipts(){const relevant=state.bookings.filter(b=>state.providerSpaces.some(s=>s.id===b.spaceId));
+return `<div class="panel">
+<div class="panel-head">
+<h2>Driver bookings & receipts</h2>
+<span class="tiny">${relevant.length} records</span>
+</div>${relevant.length?`<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Driver / vehicle</th>
+<th>Space</th>
+<th>Session</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Receipt</th>
+</tr>
+</thead>
+<tbody>${relevant.map(b=>`<tr>
+<td>
+<div class="td-title">${escapeHtml(b.driverName||'Prateek Pandey')}</div>
+<div class="td-muted">${escapeHtml(b.plate)}</div>
+</td>
+<td>${escapeHtml(b.spaceName)}</td>
+<td>${escapeHtml(b.date)}<div class="td-muted">${escapeHtml(b.start)} – ${escapeHtml(b.end)}</div>
+</td>
+<td class="td-title">${money(b.amount)}</td>
+<td>
+<span class="badge confirmed">${b.status}</span>
+</td>
+<td>
+<button class="btn secondary small" onclick="showReceipt('${b.id}')">Generate</button>
+</td>
+</tr>`).join('')}</tbody>
+</table>
+</div>`:`<div class="empty-state">
+<div class="empty-icon">▤</div>
+<strong>No driver bookings yet</strong>Bookings for your spaces appear here, with a receipt ready to view.</div>`}</div>`}
+// User actions and booking flows
+function setDriverPage(p){driverPage=p;
+render()}
 
-byId("vehicleForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const button = event.currentTarget.querySelector("button");
-  button.disabled = true;
-  try {
-    const result = await api("/vehicles", {
-      method: "POST",
-      body: JSON.stringify({ owner_name: form.get("owner_name").trim(), plate: cleanPlate(form.get("plate")) })
-    });
-    showMessage("vehicleMessage", `Vehicle ${result.plate} registered.`);
-    event.currentTarget.reset();
-  } catch (error) {
-    showMessage("vehicleMessage", error.message, true);
-  } finally {
-    button.disabled = false;
-  }
-});
+function setProviderPage(p){providerPage=p;
+render()}
 
-byId("bookingForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const button = event.currentTarget.querySelector("button");
-  button.disabled = true;
-  try {
-    const result = await api("/bookings", {
-      method: "POST", body: JSON.stringify({ plate: cleanPlate(form.get("plate")) })
-    });
-    showMessage("bookingMessage", `Booking confirmed. Your slot is ${result.slot_id}.`);
-    renderActiveBooking(result);
-    await loadSlots();
-  } catch (error) {
-    showMessage("bookingMessage", error.message, true);
-  } finally {
-    button.disabled = false;
-  }
-});
+function enterRole(r){role=r;
+authMode='login';
+render();
+window.scrollTo(0,0)}
 
-function renderActiveBooking(booking) {
-  const box = byId("activeBooking");
-  box.hidden = false;
-  box.replaceChildren();
-  const title = document.createElement("strong");
-  title.textContent = `Booking #${booking.booking_id} · Slot ${booking.slot_id} · ${booking.status}`;
-  box.append(title);
-  for (const [action, label] of [["entry", "Record vehicle entry"], ["exit", "Record vehicle exit"]]) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = label;
-    button.className = action === "entry" ? "button-secondary" : "";
-    button.addEventListener("click", () => updateBooking(booking.booking_id, action, box));
-    box.append(button);
-  }
-}
+function goHome(){role=null;
+authMode='login';
+modal=null;
+render();
+window.scrollTo(0,0)}
+function startBooking(id){const s=allSpaces().find(x=>x.id===id);
+if(!state.vehicles.length){toast('Add a vehicle before booking');
+openVehicleModal();
+return}modal={type:'checkout',spaceId:id};
+renderModal()}
+function renderModal(){const mount=document.querySelector('#modal-mount')||document.body;
+const old=document.querySelector('.modal-backdrop');
+if(old)old.remove();
+const m=modal;
+if(!m)return;
+let inner='';
+if(m.type==='checkout')inner=checkoutModal(m);
+if(m.type==='receipt')inner=receiptModal(m);
+if(m.type==='vehicle')inner=vehicleModal();
+if(m.type==='space')inner=spaceModal();
+const wrap=document.createElement('div');
+wrap.id='modal-mount';
+wrap.className='modal-backdrop';
+wrap.onclick=e=>{if(e.target===wrap)closeModal()};
+wrap.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${inner}</div>`;
+document.body.append(wrap)}
+function closeModal(){modal=null;
+document.querySelector('#modal-mount')?.remove()}
+function selectPayment(method,button){paymentMethod=method;
+document.querySelectorAll('.pay-option').forEach(option=>option.classList.toggle('selected',option===button))}
+function modalHead(title,subtitle=''){return `<div class="modal-head">
+<div>
+<h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>
+<button class="close-btn" onclick="closeModal()">×</button>
+</div>`}
+function checkoutModal(m){const s=allSpaces().find(x=>x.id===m.spaceId);
+if(!s)return '';
+const vehicles=state.vehicles;
+const date=new Date().toISOString().slice(0,10);
+return `${modalHead('Complete your booking',`${escapeHtml(s.name)} · ${escapeHtml(s.area)}`)}<form class="form-stack" onsubmit="confirmBooking(event,'${s.id}')">
+<label>
+<span class="form-label">Select vehicle</span>
+<select class="field" name="vehicle" required>${vehicles.map(v=>`<option value="${v.id}">${escapeHtml(v.plate)} · ${escapeHtml(v.model)}</option>`).join('')}</select>
+</label>
+<div class="form-two">
+<label>
+<span class="form-label">Parking date</span>
+<input class="field" type="date" name="date" min="${date}" value="${date}" required>
+</label>
+<label>
+<span class="form-label">Duration</span>
+<select class="field" name="duration">
+<option value="1">1 hour</option>
+<option value="2">2 hours</option>
+<option value="3">3 hours</option>
+<option value="4">4 hours</option>
+<option value="8">8 hours</option>
+</select>
+</label>
+</div>
+<label>
+<span class="form-label">Start time</span>
+<input class="field" type="time" name="start" value="10:00" required>
+</label>
+<div>
+<span class="form-label">Payment method</span>
+<div class="payment-method">
+<button type="button" class="pay-option ${paymentMethod==='UPI'?'selected':''}" onclick="selectPayment('UPI',this)">◉ &nbsp;UPI</button>
+<button type="button" class="pay-option ${paymentMethod==='Card'?'selected':''}" onclick="selectPayment('Card',this)">▣ &nbsp;Card</button>
+<button type="button" class="pay-option ${paymentMethod==='Cash'?'selected':''}" onclick="selectPayment('Cash',this)">₹ &nbsp;Pay at spot</button>
+</div>
+</div>
+<div class="checkout-total">
+<div>
+<div class="tiny">Estimated total · ${money(s.price)} × selected hours</div>
+<strong id="total-display">${money(s.price)}</strong>
+</div>
+<span class="badge available">Secure checkout</span>
+</div>
+<button class="btn full" type="submit">Confirm booking · ${money(s.price)}</button>
+</form>`}
+function confirmBooking(e,id){e.preventDefault();
+const s=allSpaces().find(x=>x.id===id);
+if(!s||s.available<1){toast('Sorry, this spot is no longer available');
+closeModal();
+render();
+return}const fd=new FormData(e.target),v=state.vehicles.find(x=>x.id===fd.get('vehicle')),hours=Number(fd.get('duration')),start=fd.get('start'),date=fd.get('date');
+if(!v){toast('Select a registered vehicle');
+return}if(!date||date<new Date().toISOString().slice(0,10)){toast('Choose today or a future date');
+return}const [hh,mm]=start.split(':').map(Number),end=new Date(2000,0,1,hh+hours,mm).toTimeString().slice(0,5);
+s.available--;
+const booking={id:'BK-'+Date.now().toString().slice(-7),spaceId:s.id,spaceName:s.name,address:s.address,plate:v?.plate||'',vehicleModel:v?.model||'',driverName:'Prateek Pandey',date,start,end,hours,amount:s.price*hours,status:'Confirmed',method:paymentMethod,created:new Date().toISOString()};
+state.bookings.unshift(booking);
+state.receipts.unshift(booking.id);
+save();
+modal={type:'receipt',bookingId:booking.id,success:true};
+render();
+renderModal();
+toast('Booking confirmed')}
+function showReceipt(id){modal={type:'receipt',bookingId:id};
+renderModal()}
+function receiptModal(m){const b=state.bookings.find(x=>x.id===m.bookingId);
+if(!b)return `${modalHead('Receipt')}Booking not found.`;
+return `${modalHead(m.success?'Booking confirmed':'Parking receipt',m.success?'Your spot is reserved. Here is your receipt.':'SmartPark · Parking receipt')}<div class="receipt">
+<div class="receipt-brand">
+<span class="brand-mark" style="width:30px;height:30px;font-size:16px">P</span> smartpark <span style="margin-left:auto" class="receipt-id">${escapeHtml(b.id)}</span>
+</div>
+<hr style="border:0;border-top:1px solid var(--line);margin:15px 0">
+<div class="receipt-line">
+<span>Parking location</span>
+<b>${escapeHtml(b.spaceName)}</b>
+</div>
+<div class="receipt-line">
+<span>Address</span>
+<b>${escapeHtml(b.address)}</b>
+</div>
+<div class="receipt-line">
+<span>Driver</span>
+<b>${escapeHtml(b.driverName||'Prateek Pandey')}</b>
+</div>
+<div class="receipt-line">
+<span>Vehicle</span>
+<b>${escapeHtml(b.plate)} · ${escapeHtml(b.vehicleModel||'')}</b>
+</div>
+<div class="receipt-line">
+<span>Date & time</span>
+<b>${escapeHtml(b.date)} · ${escapeHtml(b.start)}–${escapeHtml(b.end)}</b>
+</div>
+<div class="receipt-line">
+<span>Payment</span>
+<b>${escapeHtml(b.method)}</b>
+</div>
+<div class="receipt-total">
+<span>Total</span>
+<span>${money(b.amount)}</span>
+</div>
+</div>
+<div class="receipt-actions">
+<button class="btn outline full" onclick="window.print()">Print receipt</button>
+<button class="btn full" onclick="closeModal();${role==='driver'?"setDriverPage('bookings')":"setProviderPage('receipts')"}">Done</button>
+</div>`}
+function openVehicleModal(){modal={type:'vehicle'};
+renderModal()}
+function vehicleModal(){return `${modalHead('Add a vehicle','Register a vehicle for faster parking bookings.')}<form class="form-stack" onsubmit="addVehicle(event)">
+<label>
+<span class="form-label">Vehicle registration number</span>
+<input class="field" name="plate" placeholder="KA 03 MN 4821" required maxlength="15">
+</label>
+<div class="form-two">
+<label>
+<span class="form-label">Make & model</span>
+<input class="field" name="model" placeholder="Hyundai i20" required>
+</label>
+<label>
+<span class="form-label">Vehicle type</span>
+<select class="field" name="type">
+<option>Car</option>
+<option>SUV</option>
+<option>Two-wheeler</option>
+<option>Electric vehicle</option>
+</select>
+</label>
+</div>
+<button class="btn full">Save vehicle</button>
+</form>`}
+function addVehicle(e){e.preventDefault();
+const fd=new FormData(e.target);
+state.vehicles.push({id:'VH-'+Date.now(),plate:String(fd.get('plate')).toUpperCase().trim(),model:fd.get('model').trim(),type:fd.get('type')});
+save();
+closeModal();
+render();
+toast('Vehicle added')}
+function removeVehicle(id){if(state.vehicles.length<=1){toast('Keep at least one vehicle registered');
+return}state.vehicles=state.vehicles.filter(v=>v.id!==id);
+save();
+render();
+toast('Vehicle removed')}
+function openSpaceModal(){modal={type:'space'};
+renderModal()}
+function spaceModal(){return `${modalHead('List a parking space','Add the details drivers will see when they search.')}<form class="form-stack" onsubmit="addSpace(event)">
+<label>
+<span class="form-label">Space or facility name</span>
+<input class="field" name="name" placeholder="e.g. Riverside Parking" required>
+</label>
+<label>
+<span class="form-label">Street address</span>
+<input class="field" name="address" placeholder="Street, neighborhood, city" required>
+</label>
+<div class="form-two">
+<label>
+<span class="form-label">Area</span>
+<input class="field" name="area" placeholder="e.g. Rajpur Road" required>
+</label>
+<label>
+<span class="form-label">Price per hour (₹)</span>
+<input class="field" name="price" type="number" min="1" value="30" required>
+</label>
+</div>
+<div class="form-two">
+<label>
+<span class="form-label">Total capacity (spaces)</span>
+<input class="field" name="capacity" type="number" min="1" value="5" required>
+</label>
+<label>
+<span class="form-label">Type</span>
+<select class="field" name="kind">
+<option>Covered</option>
+<option>Open air</option>
+</select>
+</label>
+</div>
+<label>
+<span class="form-label">Opening hours</span>
+<input class="field" name="hours" value="Open 24 hours" required>
+</label>
+<button class="btn full">Publish parking space</button>
+</form>`}
+function addSpace(e){e.preventDefault();
+const fd=new FormData(e.target),cap=Number(fd.get('capacity'));
+state.providerSpaces.push({id:'MY-'+Date.now().toString().slice(-6),name:fd.get('name').trim(),address:fd.get('address').trim(),area:fd.get('area').trim(),price:Number(fd.get('price')),capacity:cap,available:cap,kind:fd.get('kind'),hours:fd.get('hours').trim()});
+save();
+closeModal();
+providerPage='spaces';
+render();
+toast('Parking space listed')}
+function adjustAvailability(id,delta){const s=state.providerSpaces.find(x=>x.id===id);
+if(!s)return;
+const next=s.available+delta;
+if(next<0){toast('No free slots left to mark occupied');
+return}if(next>s.capacity){toast('All spaces are already available');
+return}s.available=next;
+save();
+render();
+toast(delta>0?'Slot marked available':'Slot marked occupied')}
+document.addEventListener('change',e=>{if(e.target.matches('[name="duration"]')){const spaceId=modal?.spaceId,s=allSpaces().find(x=>x.id===spaceId);const out=document.querySelector('#total-display');if(out&&s)out.textContent=money(s.price*Number(e.target.value));const submit=document.querySelector('.modal form button[type="submit"]');if(submit&&s)submit.textContent=`Confirm booking · ${money(s.price*Number(e.target.value))}`}});
 
-async function updateBooking(bookingId, action, box) {
-  try {
-    const result = await api(`/bookings/${bookingId}/${action}`, { method: "POST" });
-    showMessage("bookingMessage", `Booking #${bookingId} updated to ${result.status}.`);
-    box.querySelector("strong").textContent = `Booking #${bookingId} · Status ${result.status}`;
-    await loadSlots();
-  } catch (error) {
-    showMessage("bookingMessage", error.message, true);
-  }
-}
-
-byId("historyForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const tbody = byId("historyRows");
-  showMessage("historyMessage", "");
-  try {
-    const plate = encodeURIComponent(cleanPlate(form.get("plate")));
-    const history = await api(`/vehicles/${plate}/history`);
-    tbody.replaceChildren();
-    if (!history.length) {
-      const row = tbody.insertRow();
-      const cell = row.insertCell();
-      cell.colSpan = 6;
-      cell.className = "empty";
-      cell.textContent = "No bookings found for this vehicle.";
-      return;
-    }
-    for (const booking of history) {
-      const row = tbody.insertRow();
-      for (const value of [booking.booking_id, booking.slot, booking.status,
-        formatDate(booking.booked_at), formatDate(booking.entry_time), formatDate(booking.exit_time)]) {
-        row.insertCell().textContent = value ?? "—";
-      }
-    }
-  } catch (error) {
-    showMessage("historyMessage", error.message, true);
-  }
-});
-
-function formatDate(value) {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
-}
-
-byId("refreshSlots").addEventListener("click", loadSlots);
-loadHealth();
-loadSlots();
-
-  </script>
+render();
+</script>
 </body>
 </html>
