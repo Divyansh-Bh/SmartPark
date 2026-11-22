@@ -1126,6 +1126,12 @@ function save() {
 function escapeHtml(s='') {
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(n){return '₹'+Number(n).toLocaleString('en-IN')}
+function mapsLink(b, label = 'Open in Google Maps', classes = 'btn outline full') {
+    const destination = [b.spaceName, b.address].filter(Boolean).join(', ');
+    if (!destination) return '';
+    const url = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination);
+    return `<a class="${classes}" href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+}
 function allSpaces(){return [...state.spaces,...state.providerSpaces]}
 function toast(message){const region=document.querySelector('#toast-region');
 if(!region)return;
@@ -1147,7 +1153,6 @@ function brand(){return `<div class="brand" onclick="goHome()">
 </div>
 </div>`}
 function landing(){return `<header class="topbar">${brand()}<div class="top-actions">
-<button class="btn outline small" onclick="openOsSimModal()" style="border-color:var(--green);color:var(--green);font-weight:700">⚡ OS & DBMS Lab</button>
 </div>
 </header>
 <main>
@@ -1177,7 +1182,6 @@ function landing(){return `<header class="topbar">${brand()}<div class="top-acti
 <strong>SmartPark</strong> · Intelligent Parking Management System · Parking made simple</footer>`}
 function authPage(){const provider=role==='provider',title=provider?'Parking Space Provider':'Driver';
 return `<header class="topbar">${brand()}<div class="top-actions">
-<button class="btn outline small" onclick="openOsSimModal()" style="border-color:var(--green);color:var(--green);font-weight:700">⚡ OS Lab</button>
 <button class="btn outline small" onclick="goHome()">← Choose role</button>
 </div>
 </header>
@@ -1215,61 +1219,22 @@ return `<header class="topbar">${brand()}<div class="top-actions">
 <footer class="footer-note">SmartPark · Parking made simple</footer>`}
 function setAuthMode(mode){authMode=mode;
 render()}
-async function submitAuth(e){e.preventDefault();
+function submitAuth(e){e.preventDefault();
 const fd=new FormData(e.target),email=String(fd.get('email')).trim().toLowerCase(),password=String(fd.get('password'));
 if(password.length<6){toast('Use a password with at least 6 characters');
-return}
-if(authMode==='register'){
-  if(password!==fd.get('confirmPassword')){toast('The passwords do not match');return}
-  try {
-    const res=await fetch('/api/register', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        name:String(fd.get('name')||'').trim(),
-        email,
-        phone:String(fd.get('phone')||'').trim(),
-        password,
-        role
-      })
-    });
-    const data=await res.json();
-    if(data.success){
-      state.currentUser=data.user;
-      toast('Account created and saved to SQLite');
-      authMode='workspace';
-      await syncWithBackend();
-      render();
-    } else {
-      toast(data.message||'Registration failed');
-    }
-  } catch(err){
-    toast('Server connection failed: '+err.message);
-  }
-} else {
-  try {
-    const res=await fetch('/api/login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email, password, role})
-    });
-    const data=await res.json();
-    if(data.success){
-      state.currentUser=data.user;
-      toast(`Signed in as ${data.user.name||data.user.email}`);
-      authMode='workspace';
-      await syncWithBackend();
-      render();
-    } else {
-      toast(data.message||'Incorrect credentials');
-    }
-  } catch(err){
-    toast('Server connection failed: '+err.message);
-  }
-}
+return}if(authMode==='register'){if(password!==fd.get('confirmPassword')){toast('The passwords do not match');
+return}const exists=state.accounts.some(a=>a.email===email&&a.role===role);
+if(exists){toast('An account with this email already exists for this role');
+return}state.accounts.push({id:'AC-'+Date.now(),name:String(fd.get('name')).trim(),email,phone:String(fd.get('phone')||''),password,role});
+save();
+toast('Account created')}else{const existing=state.accounts.find(a=>a.email===email&&a.role===role);
+if(existing&&existing.password&&existing.password!==password){toast('Email or password is incorrect');
+return}if(!existing){toast('No account found. Create an account to continue');
+return}if(existing.password!==password){toast('Email or password is incorrect');
+return}toast('Signed in')}authMode='workspace';
+render();
 window.scrollTo(0,0)}
 function appLayout(){return `<header class="topbar">${brand()}<div class="top-actions">
-<button class="btn outline small" onclick="openOsSimModal()" style="border-color:var(--green);color:var(--green);font-weight:700">⚡ OS Lab</button>
 <span class="location-chip">
 <b>●</b> &nbsp;Dehradun</span>
 <span class="role-chip ${role==='provider'?'provider-header':''}">${role==='driver'?'Driver workspace':'Provider workspace'}</span>
@@ -1395,6 +1360,7 @@ return `<div class="panel">
 </td>
 <td>
 <button class="btn secondary small" onclick="showReceipt('${b.id}')">View</button>
+${mapsLink(b, 'Maps', 'btn outline small')}
 </td>
 </tr>`).join('')}</tbody>
 </table>
@@ -1560,7 +1526,6 @@ if(m.type==='checkout')inner=checkoutModal(m);
 if(m.type==='receipt')inner=receiptModal(m);
 if(m.type==='vehicle')inner=vehicleModal();
 if(m.type==='space')inner=spaceModal();
-if(m.type==='os_sim')inner=osSimModal();
 const wrap=document.createElement('div');
 wrap.id='modal-mount';
 wrap.className='modal-backdrop';
@@ -1618,62 +1583,28 @@ return `${modalHead('Complete your booking',`${escapeHtml(s.name)} · ${escapeHt
 <div class="tiny">Estimated total · ${money(s.price)} × selected hours</div>
 <strong id="total-display">${money(s.price)}</strong>
 </div>
-<span class="badge available">OS FCFS Queued</span>
+<span class="badge available">Secure checkout</span>
 </div>
-<button class="btn full" type="submit">Submit to FCFS Queue · ${money(s.price)}</button>
+<button class="btn full" type="submit">Confirm booking · ${money(s.price)}</button>
 </form>`}
-async function confirmBooking(e,id){e.preventDefault();
+function confirmBooking(e,id){e.preventDefault();
 const s=allSpaces().find(x=>x.id===id);
-if(!s||s.available<1){toast('Sorry, this parking facility has no available slots');
+if(!s||s.available<1){toast('Sorry, this spot is no longer available');
 closeModal();
 render();
-return}
-const fd=new FormData(e.target);
-const v=state.vehicles.find(x=>x.id===fd.get('vehicle'));
-const hours=Number(fd.get('duration'));
-const start=fd.get('start');
-const date=fd.get('date');
-if(!v){toast('Select a registered vehicle');return}
-if(!date||date<new Date().toISOString().slice(0,10)){toast('Choose today or a future date');return}
-const [hh,mm]=start.split(':').map(Number);
-const end=new Date(2000,0,1,hh+hours,mm).toTimeString().slice(0,5);
-
-toast('Request enqueued in OS FCFS Queue...');
-
-try {
-  const res = await fetch('/api/book', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      user_id: state.currentUser?.userId || 1,
-      space_id: s.id,
-      driver_name: state.currentUser?.name || 'Driver',
-      plate: v.plate,
-      vehicle_model: v.model,
-      date: date,
-      start: start,
-      end: end,
-      hours: hours,
-      amount: s.price * hours,
-      method: paymentMethod
-    })
-  });
-  const data = await res.json();
-  if(data.success){
-    state.bookings.unshift(data.booking);
-    await syncWithBackend();
-    modal={type:'receipt',bookingId:data.booking.id,success:true};
-    render();
-    renderModal();
-    toast(`Confirmed! Allocated physical slot ${data.booking.slotNumber} via FAS.`);
-  } else {
-    toast('Booking rejected: ' + (data.message || 'Error occurred'));
-    closeModal();
-    await syncWithBackend();
-  }
-} catch(err) {
-  toast('Network error during booking');
-}}
+return}const fd=new FormData(e.target),v=state.vehicles.find(x=>x.id===fd.get('vehicle')),hours=Number(fd.get('duration')),start=fd.get('start'),date=fd.get('date');
+if(!v){toast('Select a registered vehicle');
+return}if(!date||date<new Date().toISOString().slice(0,10)){toast('Choose today or a future date');
+return}const [hh,mm]=start.split(':').map(Number),end=new Date(2000,0,1,hh+hours,mm).toTimeString().slice(0,5);
+s.available--;
+const booking={id:'BK-'+Date.now().toString().slice(-7),spaceId:s.id,spaceName:s.name,address:s.address,plate:v?.plate||'',vehicleModel:v?.model||'',driverName:'Prateek Pandey',date,start,end,hours,amount:s.price*hours,status:'Confirmed',method:paymentMethod,created:new Date().toISOString()};
+state.bookings.unshift(booking);
+state.receipts.unshift(booking.id);
+save();
+modal={type:'receipt',bookingId:booking.id,success:true};
+render();
+renderModal();
+toast('Booking confirmed')}
 function showReceipt(id){modal={type:'receipt',bookingId:id};
 renderModal()}
 function receiptModal(m){const b=state.bookings.find(x=>x.id===m.bookingId);
@@ -1688,16 +1619,12 @@ return `${modalHead(m.success?'Booking confirmed':'Parking receipt',m.success?'Y
 <b>${escapeHtml(b.spaceName)}</b>
 </div>
 <div class="receipt-line">
-<span>Allocated Slot (OS FAS Algorithm)</span>
-<b style="color:var(--green);font-size:15px">✓ ${escapeHtml(b.slotNumber||'SLOT-01')}</b>
-</div>
-<div class="receipt-line">
 <span>Address</span>
 <b>${escapeHtml(b.address)}</b>
 </div>
 <div class="receipt-line">
 <span>Driver</span>
-<b>${escapeHtml(b.driverName||'Driver')}</b>
+<b>${escapeHtml(b.driverName||'Prateek Pandey')}</b>
 </div>
 <div class="receipt-line">
 <span>Vehicle</span>
@@ -1708,15 +1635,16 @@ return `${modalHead(m.success?'Booking confirmed':'Parking receipt',m.success?'Y
 <b>${escapeHtml(b.date)} · ${escapeHtml(b.start)}–${escapeHtml(b.end)}</b>
 </div>
 <div class="receipt-line">
-<span>Payment method</span>
-<b>${escapeHtml(b.method||'UPI')}</b>
+<span>Payment</span>
+<b>${escapeHtml(b.method)}</b>
 </div>
 <div class="receipt-total">
-<span>Total Amount</span>
+<span>Total</span>
 <span>${money(b.amount)}</span>
 </div>
 </div>
 <div class="receipt-actions">
+${mapsLink(b)}
 <button class="btn outline full" onclick="window.print()">Print receipt</button>
 <button class="btn full" onclick="closeModal();${role==='driver'?"setDriverPage('bookings')":"setProviderPage('receipts')"}">Done</button>
 </div>`}
@@ -1742,41 +1670,20 @@ function vehicleModal(){return `${modalHead('Add a vehicle','Register a vehicle 
 </select>
 </label>
 </div>
-<button class="btn full">Save vehicle to SQLite</button>
+<button class="btn full">Save vehicle</button>
 </form>`}
-async function addVehicle(e){e.preventDefault();
+function addVehicle(e){e.preventDefault();
 const fd=new FormData(e.target);
-const plate=String(fd.get('plate')).toUpperCase().trim();
-const model=fd.get('model').trim();
-const type=fd.get('type');
-try {
-  const res = await fetch('/api/vehicles', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ plate, model, type, user_id: state.currentUser?.userId || 1 })
-  });
-  const data = await res.json();
-  if(data.success){
-    state.vehicles.push(data.vehicle);
-    closeModal();
-    render();
-    toast('Vehicle saved to database');
-  } else {
-    toast(data.message);
-  }
-} catch(err) {
-  toast('Failed to save vehicle: '+err.message);
-}}
-async function removeVehicle(id){
-if(state.vehicles.length<=1){toast('Keep at least one vehicle registered');return}
-try {
-  await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
-  state.vehicles=state.vehicles.filter(v=>v.id!==id);
-  render();
-  toast('Vehicle removed from DB');
-} catch(err){
-  toast('Failed to delete vehicle');
-}}
+state.vehicles.push({id:'VH-'+Date.now(),plate:String(fd.get('plate')).toUpperCase().trim(),model:fd.get('model').trim(),type:fd.get('type')});
+save();
+closeModal();
+render();
+toast('Vehicle added')}
+function removeVehicle(id){if(state.vehicles.length<=1){toast('Keep at least one vehicle registered');
+return}state.vehicles=state.vehicles.filter(v=>v.id!==id);
+save();
+render();
+toast('Vehicle removed')}
 function openSpaceModal(){modal={type:'space'};
 renderModal()}
 function spaceModal(){return `${modalHead('List a parking space','Add the details drivers will see when they search.')}<form class="form-stack" onsubmit="addSpace(event)">
@@ -1815,150 +1722,28 @@ function spaceModal(){return `${modalHead('List a parking space','Add the detail
 <span class="form-label">Opening hours</span>
 <input class="field" name="hours" value="Open 24 hours" required>
 </label>
-<button class="btn full">Publish to SQLite DB</button>
+<button class="btn full">Publish parking space</button>
 </form>`}
-async function addSpace(e){e.preventDefault();
+function addSpace(e){e.preventDefault();
 const fd=new FormData(e.target),cap=Number(fd.get('capacity'));
-try {
-  const res = await fetch('/api/spaces', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      name: fd.get('name').trim(),
-      address: fd.get('address').trim(),
-      area: fd.get('area').trim(),
-      price: Number(fd.get('price')),
-      capacity: cap,
-      kind: fd.get('kind'),
-      hours: fd.get('hours').trim()
-    })
-  });
-  const data = await res.json();
-  if(data.success){
-    closeModal();
-    providerPage='spaces';
-    await syncWithBackend();
-    toast('Space listed & physical slots generated');
-  } else {
-    toast(data.message);
-  }
-} catch(err) {
-  toast('Failed to list space: '+err.message);
-}}
-async function adjustAvailability(id,delta){
-try {
-  const res = await fetch(`/api/spaces/${id}/adjust`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ delta })
-  });
-  const data = await res.json();
-  if(data.success){
-    await syncWithBackend();
-    toast(delta>0?'Slot marked available in DB':'Slot marked occupied in DB');
-  } else {
-    toast(data.message);
-  }
-} catch(err) {
-  toast('Error updating availability');
-}}
-
-// OS & DBMS Concept Demonstration Modal
-function openOsSimModal(){modal={type:'os_sim'};renderModal()}
-function osSimModal(){return `${modalHead('Operating Systems & DBMS Architecture','Academic Demonstration for 3rd-Year B.Tech CSE')}<div class="receipt" style="max-height:480px;overflow-y:auto;text-align:left">
-<div style="background:#e4f3eb;padding:12px;border-radius:10px;margin-bottom:15px;color:#105d40">
-  <strong>1. OS Algorithm 1 (FCFS Queue):</strong> Incoming booking requests are queued in a thread-safe <code>queue.Queue</code> and processed in strict arrival order by a worker dispatcher.<br><br>
-  <strong>2. OS Algorithm 2 (FAS Allocation):</strong> Physical parking slots are scanned in ascending order (<code>ORDER BY slot_id ASC</code>) and the First Available Slot is allocated.<br><br>
-  <strong>3. Concurrency Safeguard:</strong> SQLite <code>BEGIN IMMEDIATE TRANSACTION</code> and atomic conditional update (<code>WHERE status='Available'</code>) prevents double bookings.
-</div>
-<div style="margin-bottom:15px">
-  <button class="btn full" onclick="runCpuSimUI()">▶ Execute FCFS CPU Scheduling Simulation</button>
-</div>
-<div id="osSimResult" style="font-family:monospace;font-size:12px"></div>
-</div>
-<div class="receipt-actions">
-<button class="btn full" onclick="closeModal()">Close</button>
-</div>`}
-
-async function runCpuSimUI(){
-  const box = document.querySelector('#osSimResult');
-  if(!box) return;
-  box.innerHTML = 'Computing FCFS Gantt chart and waiting times...';
-  try {
-    const res = await fetch('/api/simulate-fcfs');
-    const data = await res.json();
-    if(data.success){
-      let table = `
-        <table style="width:100%;border-collapse:collapse;margin-top:10px;text-align:center">
-          <thead>
-            <tr style="background:#152a23;color:#fff">
-              <th style="padding:6px">Process</th>
-              <th>Arrival (AT)</th>
-              <th>Burst (BT)</th>
-              <th>Completion (CT)</th>
-              <th>Turnaround (TAT)</th>
-              <th>Waiting (WT)</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      data.processes.forEach(p => {
-        table += `
-          <tr style="border-bottom:1px solid #e4eae6">
-            <td style="padding:6px;font-weight:700">${p.pid}</td>
-            <td>${p.arrival_time} ms</td>
-            <td>${p.burst_time} ms</td>
-            <td>${p.completion_time} ms</td>
-            <td>${p.turnaround_time} ms</td>
-            <td style="color:#167653;font-weight:700">${p.waiting_time} ms</td>
-          </tr>
-        `;
-      });
-      table += `
-          </tbody>
-        </table>
-        <div style="margin-top:10px;background:#f5f8f6;padding:10px;border-radius:8px">
-          <strong>Average Turnaround Time:</strong> ${data.avg_turnaround_time} ms<br>
-          <strong>Average Waiting Time:</strong> ${data.avg_waiting_time} ms
-        </div>
-      `;
-      box.innerHTML = table;
-    }
-  } catch(err){
-    box.innerHTML = 'Failed to load simulation: '+err.message;
-  }
-}
-
-// Global synchronization with SQLite backend
-async function syncWithBackend(){
-  try {
-    const sRes = await fetch('/api/spaces');
-    const sData = await sRes.json();
-    if(sData.success){
-      state.spaces = sData.spaces;
-      state.providerSpaces = sData.providerSpaces;
-    }
-    const bRes = await fetch('/api/bookings');
-    const bData = await bRes.json();
-    if(bData.success){
-      state.bookings = bData.bookings;
-    }
-    const vRes = await fetch('/api/vehicles');
-    const vData = await vRes.json();
-    if(vData.success){
-      state.vehicles = vData.vehicles;
-    }
-    render();
-  } catch(e){
-    console.log('[SmartPark] Local cache active:', e);
-  }
-}
-
-document.addEventListener('change',e=>{if(e.target.matches('[name="duration"]')){const spaceId=modal?.spaceId,s=allSpaces().find(x=>x.id===spaceId);const out=document.querySelector('#total-display');if(out&&s)out.textContent=money(s.price*Number(e.target.value));const submit=document.querySelector('.modal form button[type="submit"]');if(submit&&s)submit.textContent=`Submit to FCFS Queue · ${money(s.price*Number(e.target.value))}`}});
-
-// Initial boot
+state.providerSpaces.push({id:'MY-'+Date.now().toString().slice(-6),name:fd.get('name').trim(),address:fd.get('address').trim(),area:fd.get('area').trim(),price:Number(fd.get('price')),capacity:cap,available:cap,kind:fd.get('kind'),hours:fd.get('hours').trim()});
+save();
+closeModal();
+providerPage='spaces';
 render();
-syncWithBackend();
+toast('Parking space listed')}
+function adjustAvailability(id,delta){const s=state.providerSpaces.find(x=>x.id===id);
+if(!s)return;
+const next=s.available+delta;
+if(next<0){toast('No free slots left to mark occupied');
+return}if(next>s.capacity){toast('All spaces are already available');
+return}s.available=next;
+save();
+render();
+toast(delta>0?'Slot marked available':'Slot marked occupied')}
+document.addEventListener('change',e=>{if(e.target.matches('[name="duration"]')){const spaceId=modal?.spaceId,s=allSpaces().find(x=>x.id===spaceId);const out=document.querySelector('#total-display');if(out&&s)out.textContent=money(s.price*Number(e.target.value));const submit=document.querySelector('.modal form button[type="submit"]');if(submit&&s)submit.textContent=`Confirm booking · ${money(s.price*Number(e.target.value))}`}});
+
+render();
 </script>
 </body>
 </html>
